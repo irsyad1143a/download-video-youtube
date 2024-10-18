@@ -17,11 +17,14 @@ if (!fs.existsSync(downloadDir)) {
   process.exit(1);
 }
 
-app.use(express.static(path.join(__dirname, "public")));
-
+// Routes specific
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
+
+// Static files
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname)));
 
 app.get("/download", async (req, res) => {
   const videoURL = req.query.url;
