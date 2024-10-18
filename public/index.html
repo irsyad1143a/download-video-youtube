@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unduh Video YouTube</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="icon.ico" type="image/x-icon" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Unduh Video YouTube</h2>
+      <label for="videoURL">Link YouTube:</label>
+      <input type="text" id="videoURL" placeholder="Masukkan link YouTube" />
+
+      <label for="customFileName">Nama File:</label>
+      <input type="text" id="customFileName" placeholder="Masukkan nama file" value="video" />
+
+      <button onclick="fetchVideo()">Tampilkan Video</button>
+
+      <label for="formatSelect">Format:</label>
+      <select id="formatSelect" onchange="toggleResolution()">
+        <option value="mp4">MP4</option>
+        <option value="mp3">MP3</option>
+      </select>
+
+      <div id="resolutionDiv">
+        <label for="resolutionSelect">Kualitas Video:</label>
+        <select id="resolutionSelect">
+          <option value="best">Best Quality</option>
+          <option value="1080">1080p</option>
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="360">360p</option>
+        </select>
+      </div>
+
+      <div class="video-frame" id="videoFrame"></div>
+      <button onclick="downloadVideo()">Download</button>
+      <div id="status"></div>
+    </div>
+
+    <script>
+      function fetchVideo() {
+        const videoURL = document.getElementById("videoURL").value;
+        const status = document.getElementById("status");
+        const videoFrame = document.getElementById("videoFrame");
+
+        if (!videoURL) {
+          status.className = "error";
+          status.textContent = "Masukkan link YouTube!";
+          return;
+        }
+
+        const videoId = getVideoId(videoURL);
+        if (videoId) {
+          videoFrame.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" 
+                                        frameborder="0" allowfullscreen></iframe>`;
+          status.textContent = "";
+        } else {
+          status.className = "error";
+          status.textContent = "Link YouTube tidak valid!";
+        }
+      }
+
+      function getVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return match && match[2].length === 11 ? match[2] : null;
+      }
+
+      function downloadVideo() {
+        const videoURL = document.getElementById("videoURL").value;
+        const customFileName = document.getElementById("customFileName").value || "video";
+        const format = document.getElementById("formatSelect").value;
+        const resolution = document.getElementById("resolutionSelect").value;
+        const status = document.getElementById("status");
+
+        if (!videoURL) {
+          status.className = "error";
+          status.textContent = "Masukkan link YouTube terlebih dahulu!";
+          return;
+        }
+
+        // Buat URL download berdasarkan format dan resolusi
+        let downloadURL = `/download?url=${encodeURIComponent(videoURL)}&format=${format}&fileName=${encodeURIComponent(customFileName)}`;
+        if (format === "mp4") {
+          downloadURL += `&resolution=${resolution}`;
+        }
+
+        status.className = "";
+        status.textContent = "Download dimulai...";
+
+        fetch(downloadURL)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Gagal mengunduh video");
+            }
+            return response.blob();
+          })
+          .then((blob) => {
+            // Buat URL blob dan unduh file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${customFileName}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            status.className = "success";
+            status.textContent = "Download selesai!";
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            status.className = "error";
+            status.textContent = "Terjadi kesalahan saat mengunduh video.";
+          });
+      }
+
+      function toggleResolution() {
+        const format = document.getElementById("formatSelect").value;
+        const resolutionDiv = document.getElementById("resolutionDiv");
+
+        // Sembunyikan resolusi jika format MP3 dipilih
+        if (format === "mp3") {
+          resolutionDiv.style.display = "none";
+        } else {
+          resolutionDiv.style.display = "block";
+        }
+      }
+    </script>
+  </body>
+</html>
